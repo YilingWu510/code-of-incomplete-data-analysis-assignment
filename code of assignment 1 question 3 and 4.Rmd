@@ -1,0 +1,143 @@
+---
+title: "Assignment1 of incomplete data analysis"
+author: "Yiling Wu"
+date: "2020/10/26"
+output: html_document
+---
+
+#Question 3
+#(a)
+require('MASS')
+mu=0 ; sigma=1 ; n=500
+set.seed(1)
+Z1=mvrnorm(n,mu,sigma)
+Z2=mvrnorm(n,mu,sigma)
+Z3=mvrnorm(n,mu,sigma)
+Y_comp=array(0, c(n, 2))
+Y_mis=array(0, c(n, 2))
+Y1=1+Z1
+Y2=5+2*Z1+Z2
+Y_comp[,1]=Y1
+Y_comp[,2]=Y2
+ind=which(2*Y_comp[,1]-2+Z3<0)
+Y_mis[,1]=Y_comp[,1]
+Y_mis[ind,2]=NA
+Y_mis[-ind,2]=Y_comp[-ind,2]
+data=data.frame('Y1'=Y1,'Y2'=Y2)
+plot(density(Y_comp[,2]), 
+     col = "blue", ylim = c(0, 0.25), main = "Marginal distribution Y2", 
+     xlab = "Y2", ylab = "Density")
+lines(density(Y_mis[-ind,2]),lwd=2,col='red')
+
+legend(7.6, 0.2, legend = c("Observed data", "Completed data"), 
+       col = c("red", "blue"), lty = c(1, 1), bty ="n")
+      
+#(b)     
+fit = lm(Y2 ~ Y1, data = data)
+summary(fit)
+fit$coefficients
+set.seed(11)
+predicted_sri <- predict(fit, newdata = data) + rnorm(nrow(data), 0, sigma(fit))
+Y2sri=ifelse(is.na(Y_mis[,2]) == TRUE, predicted_sri, Y_comp[,2])
+plot(density(Y_comp[,2]), 
+     col = "blue", ylim = c(0, 0.25), main = "Marginal distribution Y2", 
+     xlab = "Y2", ylab = "Density")
+lines(density(Y2sri),lwd=2,col='red')
+legend(7.6, 0.2, legend = c('completed data','after imputation', "Complete data"), 
+       col = c("red", 'white',"blue"), lty = c(1, 1), bty ="n")
+
+#(c)       
+ind=which(2*Y_comp[,2]-10+Z3<0)
+Y_mis[,1]=Y_comp[,1]
+Y_mis[ind,2]=NA
+Y_mis[-ind,2]=Y_comp[-ind,2]
+data=data.frame('Y1'=Y1,'Y2'=Y2)
+plot(density(Y_comp[,2]), 
+     col = "blue", ylim = c(0, 0.30), main = "Marginal distribution Y2", 
+     xlab = "Y2", ylab = "Density")
+lines(density(Y_mis[-ind,2]),lwd=2,col='red')
+
+legend(7.6, 0.2, legend = c("Observed data", "Completed data"), 
+       col = c("red", "blue"), lty = c(1, 1), bty ="n") 
+       
+#(d)
+fit = lm(Y2 ~ Y1, data = data)
+summary(fit)
+fit$coefficients
+set.seed(11)
+predicted_sri <- predict(fit, newdata = data) + rnorm(nrow(data), 0, sigma(fit))
+Y2sri=ifelse(is.na(Y_mis[,2]) == TRUE, predicted_sri, Y_comp[,2])
+plot(density(Y_comp[,2]), 
+     col = "blue", ylim = c(0, 0.25), main = "Marginal distribution Y2", 
+     xlab = "Y2", ylab = "Density")
+lines(density(Y2sri),lwd=2,col='red')
+legend(7.6, 0.2, legend = c('completed data','after imputation', "Complete data"), 
+       col = c("red", 'white',"blue"), lty = c(1, 1), bty ="n")
+       
+
+#Question 4
+#(a)
+load("/cloud/project/databp.Rdata")
+ind = which(is.na(databp$recovtime) == FALSE)
+mccoverall = mean(databp$recovtime, na.rm = TRUE)
+seccoverall = sd(databp$recovtime, na.rm = TRUE)/sqrt(length(ind))
+cor_recov_dose=cor(databp$recovtime, databp$logdose, use = "complete",method='pearson')
+cor_recov_blood=cor(databp$recovtime, databp$bloodp, use = "complete",method='pearson')
+mccoverall; seccoverall ;cor_recov_dose ;cor_recov_blood
+#(b)
+recovmi <- ifelse(is.na(databp$recovtime) == TRUE, mean(databp$recovtime, na.rm = TRUE), databp$recovtime)
+data=databp
+n = length(recovmi)
+mmi = mean(recovmi)
+semi = sd(recovmi)/sqrt(n)
+cor_recov_dose=cor(recovmi, data$logdose, use = "complete",method='pearson')
+cor_recov_blood=cor(recovmi, data$bloodp, use = "complete",method='pearson')
+mmi; semi;cor_recov_dose;cor_recov_blood
+#(c)
+fitrecov = lm(recovtime ~ logdose + bloodp, data = databp)
+summary(fitrecov)
+coef(fitrecov)
+fitrecov$coefficients
+predri = predict(fitrecov, newdata = databp)
+recovri = ifelse(is.na(databp$recovtime) == TRUE, predri, databp$recovtime)  
+mri = mean(recovri)
+seri = sd(recovri)/sqrt(n)
+cor_recov_dose=cor(recovri, data$logdose, use = "complete",method='pearson')
+cor_recov_blood=cor(recovri, data$bloodp, use = "complete",method='pearson')
+mri;seri;cor_recov_dose;cor_recov_blood
+#(d)
+set.seed(1)
+predsri = predict(fitrecov, newdata = databp) + rnorm(n, 0, sigma(fitrecov))
+recovsri = ifelse(is.na(databp$recovtime) == TRUE, predsri, databp$recovtime)  
+msri = mean(recovsri)
+sesri = sd(recovsri)/sqrt(n)
+cor_recov_dose=cor(recovsri, data$logdose, use = "complete",method='pearson')
+cor_recov_blood=cor(recovsri, data$bloodp, use = "complete",method='pearson')
+msri; sesri;cor_recov_dose;cor_recov_blood
+#(e)
+ind0 = which(is.na(databp$recovtime) == TRUE)
+fitrecov = lm(recovtime ~ logdose + bloodp, data = databp)
+summary(fitrecov)
+coef(fitrecov)
+fitrecov$coefficients
+predri = predict(fitrecov, newdata = databp)
+recovri = ifelse(is.na(databp$recovtime) == TRUE, predri, databp$recovtime)  
+p=predri[ind0]
+predri[ind0]=0
+for (j in p){
+a=c()
+for (i in predri){
+  diff=(i-j)^2
+  a=c(a,diff)
+}
+print(min(a))
+print(which.min(a))
+}
+predri[c(4,10,22)]=predri[c(6,2,17)]
+mean = mean(predri)
+sd = sd(predri)/sqrt(n)
+cor_recov_dose=cor(predri, data$logdose, use = "complete",method='pearson')
+cor_recov_blood=cor(predri, data$bloodp, use = "complete",method='pearson')
+mean;sd;cor_recov_dose;cor_recov_blood
+
+
